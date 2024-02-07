@@ -2,10 +2,8 @@ name: >-
   ecs-dev_env_85905f39-a02f-4772-a5ac-d424b2ef2862_app_ffbb2c7d-87dc-4b73-9d84-7cc34d5cff71
   Pipeline (Skyu Generated)
 'on':
-  pull_request:
-    types:
-      - opened
-      - synchronize
+  push:
+    branches: [deploy-to-ecs]
   workflow_dispatch: {}
   repository_dispatch:
     types: pipeline_f05e8bfa-79d4-4e1b-83bb-9af1c8ea793e
