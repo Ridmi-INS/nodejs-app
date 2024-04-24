@@ -4,20 +4,12 @@ name: container-staging_app_a52bc6d_env_e85e838 Pipeline (Skyu Generated)
     branches:
       - staging
       - release/*
-    paths: []
   workflow_dispatch: {}
   repository_dispatch:
-    types: pipeline_11dfd75b-a173-479d-acb7-00d598fc3daa
+    types: pipeline_5586981e-b97f-4081-a8a1-cd853c36b24d
 env:
   ENCODED_PIPELINE_SECRET: ${{secrets.NODEJSAPP_CONTAINERSTAGING_APP_A52BC6D_ENV_E85E838}}
-  COMMIT_ID: ${{github.event.client_payload.commitId || github.sha}}
-  IMAGE_NAME: 985504043303.dkr.ecr.us-east-1.amazonaws.com/new-test
-  DOCKER_FILE_PATH: Dockerfile
-  DOCKER_BUILD_CONTEXT: .
-  SCAN_SEVERITY: CRITICAL
-  TRIVY_SCAN_EXIT_CODE: '0'
-  TRIVY_RESULT_FORMAT: sarif
-  REPOSITORY_NAME: new-test
+  COMMIT_ID: ${{github.event.client_payload.commitId || github.sha || github.run_id}}
   DEPLOY_STEP_SHOULD_DEPLOY: 'true'
 jobs:
   code-scan:
@@ -25,76 +17,43 @@ jobs:
     permissions: write-all
     runs-on: ubuntu-latest
     steps:
-      - name: 'Run :: Decoding Secrets f3f2c3'
+      - name: 'Run :: Decoding Secrets'
         run: |2-
 
-                  if [ ! -x "$(command -v jq)" ]; then
-                    echo "jq not found, installing..."
-                    sudo apt-get update
-                    sudo apt-get install -y jq
-                  fi
-                  echo "${{ env.ENCODED_PIPELINE_SECRET }}" | base64 --decode | jq -r 'to_entries[] | "\(.key)=\(.value)"' | while read line; do echo "$line" >> $GITHUB_ENV; echo "::add-mask::${line#*=}"; done
+                if [ ! -x "$(command -v jq)" ]; then
+                  echo "jq not found, installing..."
+                  sudo apt-get update
+                  sudo apt-get install -y jq
+                fi
+                echo "${{ env.ENCODED_PIPELINE_SECRET }}" | base64 --decode | jq -r 'to_entries[] | "\(.key)=\(.value)"' | while read line; do echo "$line" >> $GITHUB_ENV; echo "::add-mask::${line#*=}"; done
                 
-      - name: 'Run :: Checkout repository for Code Scan'
-        uses: actions/checkout@v4
-      - name: 'Run :: Decoding Secrets 72ba86'
-        run: |2-
-
-                  if [ ! -x "$(command -v jq)" ]; then
-                    echo "jq not found, installing..."
-                    sudo apt-get update
-                    sudo apt-get install -y jq
-                  fi
-                  echo "${{ env.ENCODED_PIPELINE_SECRET }}" | base64 --decode | jq -r 'to_entries[] | "\(.key)=\(.value)"' | while read line; do echo "$line" >> $GITHUB_ENV; echo "::add-mask::${line#*=}"; done
-                
-      - name: 'Run :: Install Semgrep, Scan and Print'
-        run: >-
-          docker run -i -v "${PWD}:/src" semgrep/semgrep semgrep /src --json
-          --quiet > semgrep_results.json
-      - name: 'Run :: Upload Code Scan Report'
-        run: |2-
-
-                  SARIF_FILE="semgrep_results.json"
-                  if [ -n "$SARIF_FILE" ]; then
-                    cat "$SARIF_FILE" > ${{ env.COMMIT_ID }}-code-scan-report.sarif
-                    echo "Uploading CodeQL Results to S3 :: ${{ env.COMMIT_ID }}-code-scan-report.sarif"
-           
-                    response=$(curl -X POST -F 'file=@${{ env.COMMIT_ID }}-code-scan-report.sarif' -F 'provider=aws' -F 'resourceType=code-scan-report' -F 'cloudStoragePath=/${{ env.PIPELINE_APPLICATION_ID }}/code-scan-reports/'  -H 'Authorization: ${{ env.SERVICE_ACC_ACCESS_TOKEN }}' -H 'x-auth-by: sa' -H 'x-organization-id: ${{ env.PIPELINE_ORGANIZATION_ID }}' -H 'x-project-id: ${{ env.PIPELINE_PROJECT_ID }}' -H 'x-trace-id: ${{ env.PIPELINE_TRACE_ID }}' -H 'x-resource-id: ${{ env.PIPELINE_APPLICATION_ID }}' -H 'Content-Type: multipart/form-data'  '${{ env.S3_UPLOAD_ENDPOINT }}')
-
-                    if echo "$response" | grep -q '"success":true'; then
-                      echo "SUCCESS :: $response"
-                    else
-                      echo "FAILED :: $response"
-                    fi
-
-                  else
-                      echo "SARIF file not found."
-                  fi
   _status-pending:
     name: _status Pending
     permissions: write-all
+    env:
+      CONTEXT_JSON: ${{ toJson(github) }}
     runs-on: ubuntu-latest
     steps:
-      - name: 'Run :: Decoding Secrets 54ceaf'
+      - name: 'Run :: Decoding Secrets'
         run: |2-
 
-                  if [ ! -x "$(command -v jq)" ]; then
-                    echo "jq not found, installing..."
-                    sudo apt-get update
-                    sudo apt-get install -y jq
-                  fi
-                  echo "${{ env.ENCODED_PIPELINE_SECRET }}" | base64 --decode | jq -r 'to_entries[] | "\(.key)=\(.value)"' | while read line; do echo "$line" >> $GITHUB_ENV; echo "::add-mask::${line#*=}"; done
+                if [ ! -x "$(command -v jq)" ]; then
+                  echo "jq not found, installing..."
+                  sudo apt-get update
+                  sudo apt-get install -y jq
+                fi
+                echo "${{ env.ENCODED_PIPELINE_SECRET }}" | base64 --decode | jq -r 'to_entries[] | "\(.key)=\(.value)"' | while read line; do echo "$line" >> $GITHUB_ENV; echo "::add-mask::${line#*=}"; done
                 
       - name: Pipeline Started
         run: |2-
 
-                response=$(curl -X PUT -H 'Authorization: ${{ env.SERVICE_ACC_ACCESS_TOKEN }}' -H 'x-organization-id: ${{ env.PIPELINE_ORGANIZATION_ID }}' -H 'x-project-id: ${{ env.PIPELINE_PROJECT_ID }}' -H 'x-environment-id: ${{ env.PIPELINE_ENVIRONMENT_ID }}' -H 'x-trace-id: ${{ env.PIPELINE_TRACE_ID }}' -H 'x-auth-by: sa' -H 'Content-Type: application/x-www-form-urlencoded'  '${{ env.API_GATEWAY_BASEURL }}/pipeline-service/${{ env.PIPELINE_ID }}/PENDING')
-
-                if echo "$response" | grep -q '"success":true'; then
-                  echo "SUCCESS :: $response"
-                else
-                  echo "FAILED :: $response"
-                fi
+              context=$(echo '${{ env.CONTEXT_JSON }}' | jq -c . | base64)
+              response=$(curl -X PUT -d "runId=${{ github.run_id }}&context=$context"  -H 'Authorization: ${{ env.SERVICE_ACC_ACCESS_TOKEN }}' -H 'x-organization-id: ${{ env.PIPELINE_ORGANIZATION_ID }}' -H 'x-project-id: ${{ env.PIPELINE_PROJECT_ID }}' -H 'x-environment-id: ${{ env.PIPELINE_ENVIRONMENT_ID }}' -H 'x-trace-id: ${{ env.PIPELINE_TRACE_ID }}' -H 'x-auth-by: sa' -H 'Content-Type: application/x-www-form-urlencoded'  '${{ env.PIPELINE_SERVICE_EP }}/${{ env.PIPELINE_ID }}/PENDING')
+              if echo "$response" | grep -q '"success":true'; then
+                echo "SUCCESS :: $response"
+              else
+                echo "FAILED :: $response"
+              fi
               
   _release-info:
     name: _release Info
@@ -102,57 +61,52 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.client_payload.releaseData }}
     steps:
-      - name: 'Run :: Decoding Secrets 421639'
+      - name: 'Run :: Decoding Secrets'
         run: |2-
 
-                  if [ ! -x "$(command -v jq)" ]; then
-                    echo "jq not found, installing..."
-                    sudo apt-get update
-                    sudo apt-get install -y jq
-                  fi
-                  echo "${{ env.ENCODED_PIPELINE_SECRET }}" | base64 --decode | jq -r 'to_entries[] | "\(.key)=\(.value)"' | while read line; do echo "$line" >> $GITHUB_ENV; echo "::add-mask::${line#*=}"; done
+                if [ ! -x "$(command -v jq)" ]; then
+                  echo "jq not found, installing..."
+                  sudo apt-get update
+                  sudo apt-get install -y jq
+                fi
+                echo "${{ env.ENCODED_PIPELINE_SECRET }}" | base64 --decode | jq -r 'to_entries[] | "\(.key)=\(.value)"' | while read line; do echo "$line" >> $GITHUB_ENV; echo "::add-mask::${line#*=}"; done
                 
       - name: Pipeline Release
         run: |2-
 
-                echo "Pipeline Release Information"
-                echo "////////////////////////////"
-                echo "releaseId         : ${{ github.event.client_payload.releaseData.releaseId }}"
-                echo "pipelineId        : ${{ github.event.client_payload.releaseData.pipelineId }}"
-                echo "pipelineRunId     : ${{ github.run_id }}"
-                echo "applicationId     : ${{ github.event.client_payload.releaseData.appId }}"
-                echo "versionId         : ${{ env.DEPLOYMENT_APP_VERSION_ID }}"
-                echo "credentialId      : ${{ env.PIPELINE_CREDENTIAL_ID }}"
-
-                echo "userName          : ${{ github.repository_owner }}"
-                echo "repositoryName    : ${{ github.repository }}"
-
-                echo "commitId          : ${{ env.COMMIT_ID }}"
-                echo "commitHash        : ${{ env.COMMIT_ID }}"
-                echo "commitAvatar      : https://github.com/${{ github.event.head_commit.author.name }}.png"
-                echo "commitTime        : ${{ github.event.head_commit.timestamp }}"
-                echo "commitMessage     : ${{ github.event.client_payload.commitMessage }}"
-                echo "commitUser        : ${{ github.event.head_commit.author.name }}"
-
-                echo "shouldDeploy      : ${{ env.DEPLOY_STEP_SHOULD_DEPLOY }}"
-                echo "containerName     : ${{ env.DEPLOYMENT_CONTAINER_NAME }}"
-                echo "imageRegistryURL  : ${{ env.IMAGE_NAME }}",
-
-                # Storing Release Infomation for Deployment
-                response=$(curl -X POST -d "releaseId=${{ github.event.client_payload.releaseData.releaseId }}&pipelineId=${{ github.event.client_payload.releaseData.pipelineId }}&pipelineRunId=${{ github.run_id }}&versionId=${{ env.DEPLOYMENT_APP_VERSION_ID }}&applicationId=${{ github.event.client_payload.releaseData.appId }}&credentialId=${{ env.PIPELINE_CREDENTIAL_ID }}&userName=${{ github.repository_owner }}&repositoryName=${{ github.repository }}&commitId=${{ env.COMMIT_ID }}&commitData[commitHash]=${{ env.COMMIT_ID }}&commitData[commitAvatar]=https://github.com/${{ github.event.head_commit.author.name }}.png&commitData[commitTime]=${{ github.event.head_commit.timestamp }}&commitData[commitMessage]=${{ github.event.client_payload.commitMessage }}&commitData[commitUser]=${{ github.event.head_commit.author.name }}&shouldDeploy=${{ env.DEPLOY_STEP_SHOULD_DEPLOY }}&containerName=${{ env.DEPLOYMENT_CONTAINER_NAME }}&imageRegistryURL=${{ env.IMAGE_NAME }}"  -H 'Authorization: ${{ env.SERVICE_ACC_ACCESS_TOKEN }}' -H 'x-organization-id: ${{ env.PIPELINE_ORGANIZATION_ID }}' -H 'x-project-id: ${{ env.PIPELINE_PROJECT_ID }}' -H 'x-environment-id: ${{ env.PIPELINE_ENVIRONMENT_ID }}' -H 'x-trace-id: ${{ env.PIPELINE_TRACE_ID }}' -H 'x-auth-by: sa' -H 'Content-Type: application/x-www-form-urlencoded'  '${{ env.API_GATEWAY_BASEURL }}/pipeline-service/release/pipeline')
-
-                if echo "$response" | grep -q '"success":true'; then
-                  echo "SUCCESS :: $response"
-                else
-                  echo "FAILED :: $response"
-                fi
+              echo "Pipeline Release Information"
+              echo "////////////////////////////"
+              echo "releaseId         : ${{ github.event.client_payload.releaseData.releaseId }}"
+              echo "pipelineId        : ${{ github.event.client_payload.releaseData.pipelineId }}"
+              echo "pipelineRunId     : ${{ github.run_id }}"
+              echo "applicationId     : ${{ github.event.client_payload.releaseData.appId }}"
+              echo "versionId         : ${{ env.DEPLOYMENT_APP_VERSION_ID }}"
+              echo "credentialId      : ${{ env.PIPELINE_CREDENTIAL_ID }}"
+              echo "userName          : ${{ github.repository_owner }}"
+              echo "repositoryName    : ${{ github.repository }}"
+              echo "commitId          : ${{ env.COMMIT_ID }}"
+              echo "commitHash        : ${{ env.COMMIT_ID }}"
+              echo "commitAvatar      : https://github.com/${{ github.event.head_commit.author.name }}.png"
+              echo "commitTime        : ${{ github.event.head_commit.timestamp }}"
+              echo "commitMessage     : ${{ github.event.client_payload.commitMessage }}"
+              echo "commitUser        : ${{ github.event.head_commit.author.name }}"
+              echo "shouldDeploy      : ${{ env.DEPLOY_STEP_SHOULD_DEPLOY }}"
+              echo "containerName     : ${{ env.DEPLOYMENT_CONTAINER_NAME }}"
+              echo "imageRegistryURL  : ${{ env.IMAGE_NAME }}",
+              # Storing Release Infomation for Deployment
+              response=$(curl -X POST -d "releaseId=${{ github.event.client_payload.releaseData.releaseId }}&pipelineId=${{ github.event.client_payload.releaseData.pipelineId }}&pipelineRunId=${{ github.run_id }}&versionId=${{ env.DEPLOYMENT_APP_VERSION_ID }}&applicationId=${{ github.event.client_payload.releaseData.appId }}&credentialId=${{ env.PIPELINE_CREDENTIAL_ID }}&userName=${{ github.repository_owner }}&repositoryName=${{ github.repository }}&commitId=${{ env.COMMIT_ID }}&commitData[commitHash]=${{ env.COMMIT_ID }}&commitData[commitAvatar]=https://github.com/${{ github.event.head_commit.author.name }}.png&commitData[commitTime]=${{ github.event.head_commit.timestamp }}&commitData[commitMessage]=${{ github.event.client_payload.commitMessage }}&commitData[commitUser]=${{ github.event.head_commit.author.name }}&shouldDeploy=${{ env.DEPLOY_STEP_SHOULD_DEPLOY }}&containerName=${{ env.DEPLOYMENT_CONTAINER_NAME }}&imageRegistryURL=${{ env.IMAGE_NAME }}"  -H 'Authorization: ${{ env.SERVICE_ACC_ACCESS_TOKEN }}' -H 'x-organization-id: ${{ env.PIPELINE_ORGANIZATION_ID }}' -H 'x-project-id: ${{ env.PIPELINE_PROJECT_ID }}' -H 'x-environment-id: ${{ env.PIPELINE_ENVIRONMENT_ID }}' -H 'x-trace-id: ${{ env.PIPELINE_TRACE_ID }}' -H 'x-auth-by: sa' -H 'Content-Type: application/x-www-form-urlencoded'  '${{ env.API_GATEWAY_BASEURL }}/pipeline-service/release/pipeline')
+              if echo "$response" | grep -q '"success":true'; then
+                echo "SUCCESS :: $response"
+              else
+                echo "FAILED :: $response"
+              fi
               
   build-and-push:
     name: Build And Push
     permissions: write-all
     runs-on: ubuntu-latest
-    outputs:
-      stepsCanProceed: ${{ env.STEPS_CAN_PROCEED }}
+    needs:
+      - _status-pending
     steps:
       - name: Start
         run: |2-
@@ -162,23 +116,26 @@ jobs:
               
       - name: 'Run :: Checkout repository'
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: 'Run :: Checkout Specific Commit'
         if: ${{ github.event.client_payload.commitId != null }}
         run: |2-
 
               git fetch --all
-              git checkout ${{ github.event.client_payload.commitId }}
-      - name: 'Run :: Decoding Secrets 96340f'
+              git checkout ${{ github.event.client_payload.commitId }} || true
+              
+      - name: 'Run :: Decoding Secrets'
         run: |2-
 
-                  if [ ! -x "$(command -v jq)" ]; then
-                    echo "jq not found, installing..."
-                    sudo apt-get update
-                    sudo apt-get install -y jq
-                  fi
-                  echo "${{ env.ENCODED_PIPELINE_SECRET }}" | base64 --decode | jq -r 'to_entries[] | "\(.key)=\(.value)"' | while read line; do echo "$line" >> $GITHUB_ENV; echo "::add-mask::${line#*=}"; done
+                if [ ! -x "$(command -v jq)" ]; then
+                  echo "jq not found, installing..."
+                  sudo apt-get update
+                  sudo apt-get install -y jq
+                fi
+                echo "${{ env.ENCODED_PIPELINE_SECRET }}" | base64 --decode | jq -r 'to_entries[] | "\(.key)=\(.value)"' | while read line; do echo "$line" >> $GITHUB_ENV; echo "::add-mask::${line#*=}"; done
                 
-      - name: 'Run :: Configure AWS credentials f422b159-f5d8-4168-9c77-36dc2e2a0784'
+      - name: 'Run :: Configure AWS credentials'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.roleARN }}
@@ -283,51 +240,59 @@ jobs:
       - name: 'Run :: Build, tag, and push image'
         run: docker push ${{ env.IMAGE_NAME }}:${{ env.COMMIT_ID }}
         if: ${{ env.STEPS_CAN_PROCEED == 'true' }}
+    outputs:
+      stepsCanProceed: ${{ env.STEPS_CAN_PROCEED }}
   _status-success:
     name: _status Success
     permissions: write-all
+    env:
+      CONTEXT_JSON: ${{ toJson(github) }}
     runs-on: ubuntu-latest
     needs:
       - build-and-push
     if: ${{ !(failure() || cancelled()) }}
     steps:
-      - name: 'Run :: Decoding Secrets 840c04'
+      - name: 'Run :: Decoding Secrets'
         run: |2-
 
-                  if [ ! -x "$(command -v jq)" ]; then
-                    echo "jq not found, installing..."
-                    sudo apt-get update
-                    sudo apt-get install -y jq
-                  fi
-                  echo "${{ env.ENCODED_PIPELINE_SECRET }}" | base64 --decode | jq -r 'to_entries[] | "\(.key)=\(.value)"' | while read line; do echo "$line" >> $GITHUB_ENV; echo "::add-mask::${line#*=}"; done
+                if [ ! -x "$(command -v jq)" ]; then
+                  echo "jq not found, installing..."
+                  sudo apt-get update
+                  sudo apt-get install -y jq
+                fi
+                echo "${{ env.ENCODED_PIPELINE_SECRET }}" | base64 --decode | jq -r 'to_entries[] | "\(.key)=\(.value)"' | while read line; do echo "$line" >> $GITHUB_ENV; echo "::add-mask::${line#*=}"; done
                 
       - name: Pipeline Success
         run: |2-
 
-              response=$(curl -X PUT -H 'Authorization: ${{ env.SERVICE_ACC_ACCESS_TOKEN }}' -H 'x-organization-id: ${{ env.PIPELINE_ORGANIZATION_ID }}' -H 'x-project-id: ${{ env.PIPELINE_PROJECT_ID }}' -H 'x-environment-id: ${{ env.PIPELINE_ENVIRONMENT_ID }}' -H 'x-trace-id: ${{ env.PIPELINE_TRACE_ID }}' -H 'x-auth-by: sa' -H 'Content-Type: application/x-www-form-urlencoded'  '${{ env.API_GATEWAY_BASEURL }}/pipeline-service/${{ env.PIPELINE_ID }}/SUCCESS')
+              context=$(echo '${{ env.CONTEXT_JSON }}' | jq -c . | base64)
+              response=$(curl -X PUT -d "runId=${{ github.run_id }}&context=$context"  -H 'Authorization: ${{ env.SERVICE_ACC_ACCESS_TOKEN }}' -H 'x-organization-id: ${{ env.PIPELINE_ORGANIZATION_ID }}' -H 'x-project-id: ${{ env.PIPELINE_PROJECT_ID }}' -H 'x-environment-id: ${{ env.PIPELINE_ENVIRONMENT_ID }}' -H 'x-trace-id: ${{ env.PIPELINE_TRACE_ID }}' -H 'x-auth-by: sa' -H 'Content-Type: application/x-www-form-urlencoded'  '${{ env.PIPELINE_SERVICE_EP }}/${{ env.PIPELINE_ID }}/SUCCESS')
               
   _status-failed:
     name: _status Failed
     permissions: write-all
+    env:
+      CONTEXT_JSON: ${{ toJson(github) }}
     runs-on: ubuntu-latest
     needs:
       - build-and-push
     if: ${{ failure() || cancelled() }}
     steps:
-      - name: 'Run :: Decoding Secrets e1f28a'
+      - name: 'Run :: Decoding Secrets'
         run: |2-
 
-                  if [ ! -x "$(command -v jq)" ]; then
-                    echo "jq not found, installing..."
-                    sudo apt-get update
-                    sudo apt-get install -y jq
-                  fi
-                  echo "${{ env.ENCODED_PIPELINE_SECRET }}" | base64 --decode | jq -r 'to_entries[] | "\(.key)=\(.value)"' | while read line; do echo "$line" >> $GITHUB_ENV; echo "::add-mask::${line#*=}"; done
+                if [ ! -x "$(command -v jq)" ]; then
+                  echo "jq not found, installing..."
+                  sudo apt-get update
+                  sudo apt-get install -y jq
+                fi
+                echo "${{ env.ENCODED_PIPELINE_SECRET }}" | base64 --decode | jq -r 'to_entries[] | "\(.key)=\(.value)"' | while read line; do echo "$line" >> $GITHUB_ENV; echo "::add-mask::${line#*=}"; done
                 
       - name: Pipeline Failed
         run: |2-
 
-              response=$(curl -X PUT -H 'Authorization: ${{ env.SERVICE_ACC_ACCESS_TOKEN }}' -H 'x-organization-id: ${{ env.PIPELINE_ORGANIZATION_ID }}' -H 'x-project-id: ${{ env.PIPELINE_PROJECT_ID }}' -H 'x-environment-id: ${{ env.PIPELINE_ENVIRONMENT_ID }}' -H 'x-trace-id: ${{ env.PIPELINE_TRACE_ID }}' -H 'x-auth-by: sa' -H 'Content-Type: application/x-www-form-urlencoded'  '${{ env.API_GATEWAY_BASEURL }}/pipeline-service/${{ env.PIPELINE_ID }}/FAILED')
+              context=$(echo '${{ env.CONTEXT_JSON }}' | jq -c . | base64)
+              response=$(curl -X PUT -d "runId=${{ github.run_id }}&context=$context"  -H 'Authorization: ${{ env.SERVICE_ACC_ACCESS_TOKEN }}' -H 'x-organization-id: ${{ env.PIPELINE_ORGANIZATION_ID }}' -H 'x-project-id: ${{ env.PIPELINE_PROJECT_ID }}' -H 'x-environment-id: ${{ env.PIPELINE_ENVIRONMENT_ID }}' -H 'x-trace-id: ${{ env.PIPELINE_TRACE_ID }}' -H 'x-auth-by: sa' -H 'Content-Type: application/x-www-form-urlencoded'  '${{ env.PIPELINE_SERVICE_EP }}/${{ env.PIPELINE_ID }}/FAILED')
               
   deploy:
     name: Deploy
@@ -339,15 +304,15 @@ jobs:
       needs.build-and-push.outputs.stepsCanProceed == 'true' &&
       github.event.client_payload.releaseData == null
     steps:
-      - name: 'Run :: Decoding Secrets 53f0c8'
+      - name: 'Run :: Decoding Secrets'
         run: |2-
 
-                  if [ ! -x "$(command -v jq)" ]; then
-                    echo "jq not found, installing..."
-                    sudo apt-get update
-                    sudo apt-get install -y jq
-                  fi
-                  echo "${{ env.ENCODED_PIPELINE_SECRET }}" | base64 --decode | jq -r 'to_entries[] | "\(.key)=\(.value)"' | while read line; do echo "$line" >> $GITHUB_ENV; echo "::add-mask::${line#*=}"; done
+                if [ ! -x "$(command -v jq)" ]; then
+                  echo "jq not found, installing..."
+                  sudo apt-get update
+                  sudo apt-get install -y jq
+                fi
+                echo "${{ env.ENCODED_PIPELINE_SECRET }}" | base64 --decode | jq -r 'to_entries[] | "\(.key)=\(.value)"' | while read line; do echo "$line" >> $GITHUB_ENV; echo "::add-mask::${line#*=}"; done
                 
       - name: 'Run :: Deploy and Notify Resource Service'
         run: |2-
