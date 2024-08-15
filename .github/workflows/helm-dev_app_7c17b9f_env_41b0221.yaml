@@ -247,12 +247,8 @@ jobs:
     name: Deploy
     permissions: write-all
     runs-on: ubuntu-latest
-    needs:
-      - update-helm-values
-      - _status_testing
-    if: >-
-      needs.build-and-push.outputs.stepsCanProceed == 'true' &&
-      github.event.client_payload.releaseData == null
+    needs: update-helm-values
+    if: github.event.client_payload.releaseData == null
     steps:
       - name: 'Run :: Decoding Secrets'
         run: |2-
